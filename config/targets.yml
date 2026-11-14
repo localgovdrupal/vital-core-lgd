@@ -296,6 +296,12 @@ targets:
   #   webmcp: optional boolean, default false. Opt-in only — omit or set to
   #     false to leave a target unaffected. Example: webmcp: true
   #
+  #   unlisted: optional boolean, default false. true keeps scanning the site
+  #     and building its reports at the same URLs (marked noindex) but leaves
+  #     it off the dashboard, fleet tables, URL lookup, API index, llms.txt
+  #     and weekly issue comment. Anyone with a link can still open it.
+  #     Delete the line to list it again; its history is kept.
+  #
   # LocalGov Drupal councils (https://localgovdrupal.org/). Each council and
   # its web developers have approved these scans. They all run the same
   # distribution, so a finding that recurs across them may come from shared
@@ -309,6 +315,7 @@ targets:
   # report are keyed on the exact domain, so a rename starts it over.
   - domain: www.lbhf.gov.uk        # Hammersmith & Fulham Council; AWS WAF challenges GitHub's runners (diagnose, 2026-10-29)
   - domain: go.walsall.gov.uk      # Walsall Council; its pages and links use go.walsall.gov.uk
+    unlisted: true                 # off the published report while its results are adjusted (2026-11-14); still scanned
     # Shared consent dialog: Quantcast Choice (qc-cmp2-* classes; its script is served from inmobi.com).
     # Two distinct signal types are needed, so the class prefix alone is only a candidate.
     component_signatures:

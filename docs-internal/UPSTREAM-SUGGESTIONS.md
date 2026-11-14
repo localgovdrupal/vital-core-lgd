@@ -51,6 +51,7 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 27 | Shared-component findings still lead the action queue; placeholder text was corrupted | merged upstream [vital-core#295](https://github.com/mgifford/vital-core/pull/295); merged here 2026-11-04 |
 | 28 | A stale generated Spec Kitty banner told agents the project needs a migration | merged upstream [vital-core#296](https://github.com/mgifford/vital-core/pull/296); merged here 2026-11-05 |
 | 29 | A shared consent dialog is audited and counted on every page | merged upstream [vital-core#297](https://github.com/mgifford/vital-core/pull/297) (opt-in, off here until configured); merged here 2026-11-05 |
+| 30 | No way to take a site off the published report while it keeps being scanned | not yet upstream: commit `e06bbd5` (built on upstream `edbcd59`) merged here 2026-11-14, Walsall unlisted; needs pushing to vital-core and a PR |
 
 ## 1. Spell check is US English only
 
@@ -650,3 +651,26 @@ show a step change.
   match the variant the scanner receives, so enable it and check the recorded
   `consent.state` values before relying on the numbers.
 - Fleets that do not set it are unchanged.
+
+## 30. No way to take a site off the published report while it keeps being scanned
+
+Recorded 2026-11-14. **Status: not yet upstream.** Commit `e06bbd5` is built
+on upstream `edbcd59`, so it can be pushed to a vital-core branch as is and
+opened as a PR there. Merged here 2026-11-14 (the session that wrote it
+could not attach vital-core), with `unlisted: true` set on Walsall.
+
+Walsall's W46 report scored F 33 while its settings (consent dialog, page
+families) are still being adjusted, and there was no way to stop showing it
+short of removing the target, which also stops its scans, or skipping it in
+`aggregate`, which loses page detail once `prune` passes `retention_weeks`.
+The commit adds a per-target `unlisted: true`: the site is still scanned and
+aggregated (`data/` is byte-for-byte the same; the e2e test checks it), its
+pages are still built at the same URLs with `noindex`, and the dashboard,
+blocked-sites notice, fleet tables, URL lookup, API index, `llms.txt`, API
+catalog and weekly issue comment leave it out.
+
+### Open questions and limits
+
+- Unlisted is not private. Anyone with a link can still open the pages and
+  their JSON, and the data repo holds the raw results either way.
+- Pages already published for W44 to W46 may be cached elsewhere.
