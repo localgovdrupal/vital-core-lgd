@@ -53,7 +53,7 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 29 | A shared consent dialog is audited and counted on every page | merged upstream [vital-core#297](https://github.com/mgifford/vital-core/pull/297) (opt-in, off here until configured); merged here 2026-11-05 |
 | 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356); merged here 2026-11-14 in #27 (Walsall unlisted) |
 | 31 | `observations.json` is rewritten on every report run | recorded, not filed; in this fleet since #27 (2026-11-14) |
-| 32 | Evaluation report defaulted to US OpenACR for UK councils | PR open [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
+| 32 | Evaluation report defaulted to US OpenACR for UK councils | merged upstream [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
 
 ## 1. Spell check is US English only
 
@@ -696,9 +696,9 @@ the write when only `generatedAt` differs; `observations.json` needs the same.
 
 ## 32. Evaluation report defaulted to US OpenACR for UK councils
 
-Recorded 2026-11-14. **Status: PR open,
-[vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged
-here 2026-11-14 in #27.**
+Recorded 2026-11-14. **Status: merged upstream in
+[vital-core#357](https://github.com/mgifford/vital-core/pull/357) 2026-11-14;
+merged here 2026-11-14 in #27.**
 
 The upstream sync brought `evaluation_report` (OpenACR, WCAG-EM or both) with
 `openacr` set explicitly in `config/targets.yml`, so every council would have
