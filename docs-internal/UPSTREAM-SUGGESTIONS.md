@@ -51,7 +51,8 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 27 | Shared-component findings still lead the action queue; placeholder text was corrupted | merged upstream [vital-core#295](https://github.com/mgifford/vital-core/pull/295); merged here 2026-11-04 |
 | 28 | A stale generated Spec Kitty banner told agents the project needs a migration | merged upstream [vital-core#296](https://github.com/mgifford/vital-core/pull/296); merged here 2026-11-05 |
 | 29 | A shared consent dialog is audited and counted on every page | merged upstream [vital-core#297](https://github.com/mgifford/vital-core/pull/297) (opt-in, off here until configured); merged here 2026-11-05 |
-| 30 | No way to take a site off the published report while it keeps being scanned | not yet upstream: commit `e06bbd5` (built on upstream `edbcd59`) merged here 2026-11-14, Walsall unlisted; needs pushing to vital-core and a PR |
+| 30 | No way to take a site off the published report while it keeps being scanned | PR open [vital-core#356](https://github.com/mgifford/vital-core/pull/356); `e06bbd5` merged here 2026-11-14, Walsall unlisted |
+| 31 | `observations.json` is rewritten on every report run | recorded, not filed; not in this fleet until it syncs past #298 |
 
 ## 1. Spell check is US English only
 
@@ -654,10 +655,12 @@ show a step change.
 
 ## 30. No way to take a site off the published report while it keeps being scanned
 
-Recorded 2026-11-14. **Status: not yet upstream.** Commit `e06bbd5` is built
-on upstream `edbcd59`, so it can be pushed to a vital-core branch as is and
-opened as a PR there. Merged here 2026-11-14 (the session that wrote it
-could not attach vital-core), with `unlisted: true` set on Walsall.
+Recorded 2026-11-14. **Status: PR open,
+[vital-core#356](https://github.com/mgifford/vital-core/pull/356).** Commit
+`e06bbd5`, built on upstream `edbcd59`, was merged here 2026-11-14 with
+`unlisted: true` set on Walsall. The PR is that same commit with vital-core's
+`main` (#353) merged in, plus the archive index main has since added, so the
+next `git merge upstream/main` here stays clean.
 
 Walsall's W46 report scored F 33 while its settings (consent dialog, page
 families) are still being adjusted, and there was no way to stop showing it
@@ -674,3 +677,17 @@ catalog and weekly issue comment leave it out.
 - Unlisted is not private. Anyone with a link can still open the pages and
   their JSON, and the data repo holds the raw results either way.
 - Pages already published for W44 to W46 may be cached elsewhere.
+
+## 31. `observations.json` is rewritten on every report run
+
+Recorded 2026-11-14. **Status: recorded, not filed.** Not in this fleet yet:
+it arrives with the next upstream sync (vital-core after #298).
+
+`writeObservations()` (`src/lib/observations.js`) writes each site's
+`data/<domain>/observations.json` with a fresh `updated_at` on every
+`aggregate` run, even when nothing else changed: two back-to-back runs on the
+e2e fixture differ only in that stamp (found while testing
+[vital-core#356](https://github.com/mgifford/vital-core/pull/356)). The report
+workflow commits `data/` with `git add -A`, so this likely means a data-repo
+commit per site per day. `summary.json` had the same problem and now skips
+the write when only `generatedAt` differs; `observations.json` needs the same.
