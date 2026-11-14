@@ -51,8 +51,8 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 27 | Shared-component findings still lead the action queue; placeholder text was corrupted | merged upstream [vital-core#295](https://github.com/mgifford/vital-core/pull/295); merged here 2026-11-04 |
 | 28 | A stale generated Spec Kitty banner told agents the project needs a migration | merged upstream [vital-core#296](https://github.com/mgifford/vital-core/pull/296); merged here 2026-11-05 |
 | 29 | A shared consent dialog is audited and counted on every page | merged upstream [vital-core#297](https://github.com/mgifford/vital-core/pull/297) (opt-in, off here until configured); merged here 2026-11-05 |
-| 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356) 2026-11-14; here on branch `ccr-6931330a-wyg4jn` (Walsall unlisted), not yet on main |
-| 31 | `observations.json` is rewritten on every report run | recorded, not filed; not in this fleet until it syncs past #298 |
+| 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356) 2026-11-14; here with the upstream sync on branch `ccr-6931330a-wyg4jn` (Walsall unlisted), not yet on main |
+| 31 | `observations.json` is rewritten on every report run | recorded, not filed; arrives here with the upstream sync on `ccr-6931330a-wyg4jn` |
 
 ## 1. Spell check is US English only
 
@@ -658,8 +658,9 @@ show a step change.
 Recorded 2026-11-14. **Status: merged upstream in
 [vital-core#356](https://github.com/mgifford/vital-core/pull/356)
 2026-11-14.** Here, commit `e06bbd5` (built on upstream `edbcd59`) is merged
-on branch `ccr-6931330a-wyg4jn` with `unlisted: true` set on Walsall; not
-yet on main. The PR is that same commit with vital-core's
+on branch `ccr-6931330a-wyg4jn` with `unlisted: true` set on Walsall, and
+that branch has since merged upstream/main through #356 (clean apart from
+this fleet's `config/targets.yml`); not yet on main. The PR is that same commit with vital-core's
 `main` (#353) merged in, plus the archive index main has since added, so the
 next `git merge upstream/main` here stays clean.
 
@@ -681,8 +682,8 @@ catalog and weekly issue comment leave it out.
 
 ## 31. `observations.json` is rewritten on every report run
 
-Recorded 2026-11-14. **Status: recorded, not filed.** Not in this fleet yet:
-it arrives with the next upstream sync (vital-core after #298).
+Recorded 2026-11-14. **Status: recorded, not filed.** Arrives in this fleet
+with the upstream sync on branch `ccr-6931330a-wyg4jn`.
 
 `writeObservations()` (`src/lib/observations.js`) writes each site's
 `data/<domain>/observations.json` with a fresh `updated_at` on every
