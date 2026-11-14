@@ -51,9 +51,9 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 27 | Shared-component findings still lead the action queue; placeholder text was corrupted | merged upstream [vital-core#295](https://github.com/mgifford/vital-core/pull/295); merged here 2026-11-04 |
 | 28 | A stale generated Spec Kitty banner told agents the project needs a migration | merged upstream [vital-core#296](https://github.com/mgifford/vital-core/pull/296); merged here 2026-11-05 |
 | 29 | A shared consent dialog is audited and counted on every page | merged upstream [vital-core#297](https://github.com/mgifford/vital-core/pull/297) (opt-in, off here until configured); merged here 2026-11-05 |
-| 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356) 2026-11-14; here with the upstream sync on branch `ccr-6931330a-wyg4jn` (Walsall unlisted), not yet on main |
-| 31 | `observations.json` is rewritten on every report run | recorded, not filed; arrives here with the upstream sync on `ccr-6931330a-wyg4jn` |
-| 32 | Evaluation report defaulted to US OpenACR for UK councils | PR open [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here on branch `ccr-6931330a-wyg4jn`, not yet on main |
+| 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356); merged here 2026-11-14 in #27 (Walsall unlisted) |
+| 31 | `observations.json` is rewritten on every report run | recorded, not filed; in this fleet since #27 (2026-11-14) |
+| 32 | Evaluation report defaulted to US OpenACR for UK councils | PR open [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
 
 ## 1. Spell check is US English only
 
@@ -658,10 +658,9 @@ show a step change.
 
 Recorded 2026-11-14. **Status: merged upstream in
 [vital-core#356](https://github.com/mgifford/vital-core/pull/356)
-2026-11-14.** Here, commit `e06bbd5` (built on upstream `edbcd59`) is merged
-on branch `ccr-6931330a-wyg4jn` with `unlisted: true` set on Walsall, and
-that branch has since merged upstream/main through #356 (clean apart from
-this fleet's `config/targets.yml`); not yet on main. The PR is that same commit with vital-core's
+2026-11-14; merged here 2026-11-14 in #27**, with upstream/main through
+#356 (clean apart from this fleet's `config/targets.yml`) and `unlisted: true`
+set on Walsall. The PR is that same commit with vital-core's
 `main` (#353) merged in, plus the archive index main has since added, so the
 next `git merge upstream/main` here stays clean.
 
@@ -683,8 +682,8 @@ catalog and weekly issue comment leave it out.
 
 ## 31. `observations.json` is rewritten on every report run
 
-Recorded 2026-11-14. **Status: recorded, not filed.** Arrives in this fleet
-with the upstream sync on branch `ccr-6931330a-wyg4jn`.
+Recorded 2026-11-14. **Status: recorded, not filed.** In this fleet since the
+upstream sync in #27 (2026-11-14).
 
 `writeObservations()` (`src/lib/observations.js`) writes each site's
 `data/<domain>/observations.json` with a fresh `updated_at` on every
@@ -698,8 +697,8 @@ the write when only `generatedAt` differs; `observations.json` needs the same.
 ## 32. Evaluation report defaulted to US OpenACR for UK councils
 
 Recorded 2026-11-14. **Status: PR open,
-[vital-core#357](https://github.com/mgifford/vital-core/pull/357).** Merged
-here on branch `ccr-6931330a-wyg4jn`; not yet on main.
+[vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged
+here 2026-11-14 in #27.**
 
 The upstream sync brought `evaluation_report` (OpenACR, WCAG-EM or both) with
 `openacr` set explicitly in `config/targets.yml`, so every council would have
