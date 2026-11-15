@@ -54,6 +54,7 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356); merged here 2026-11-14 in #27 (Walsall unlisted) |
 | 31 | `observations.json` is rewritten on every report run | merged upstream [vital-core#358](https://github.com/mgifford/vital-core/pull/358) 2026-11-15; merged here 2026-11-15 in #29 |
 | 32 | Evaluation report defaulted to US OpenACR for UK councils | merged upstream [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
+| 33 | Six report problems on the published site (ParaCharts, cross-technology, recurring patterns, Biggest lever, Lighthouse, API catalog) | PR open [vital-core#359](https://github.com/mgifford/vital-core/pull/359); merged here on branch `ccr-6931330a-wyg4jn`, not yet on main |
 
 ## 1. Spell check is US English only
 
@@ -710,3 +711,28 @@ follow the site's country: `openacr` for a US government domain, `wcag-em`
 (the W3C website evaluation report) everywhere else, and drops the explicit
 line. With it, all five councils resolve to `wcag-em` without any setting
 here.
+
+## 33. Six report problems on the published site
+
+Recorded 2026-11-15. **Status: PR open,
+[vital-core#359](https://github.com/mgifford/vital-core/pull/359); merged
+here on branch `ccr-6931330a-wyg4jn`, not yet on main.** Found reviewing
+https://mgifford.github.io/vital-core-lgd/ on 2026-11-14 and rechecked after
+the upstream sync (#27); all six were still there.
+
+1. **ParaCharts never rendered.** Every chart page loaded the 2.8 MB vendored
+   runtime (810 KB compressed), which threw on our ISO-week x values and fell
+   back to the static SVG; 0 charts mounted. Now opt-in
+   (`interactive_charts`, default off), so no runtime or loader ships.
+2. **Cross-technology table listed 1.00× pairs.** All 25 dashboard rows had no
+   association (Drupal, jQuery, PHP, HSTS...). The fleet table now uses the
+   per-site with-versus-without comparison from #19.
+3. **Recurring patterns mixed tiers.** All four rows were AAA or best
+   practice, with no Requirement column. Required patterns now get the table;
+   the rest go under "Beyond the requirements".
+4. **"Biggest lever" named best-practice rules** (Walsall `aria-allowed-role`,
+   Luton `region`) above a different "Biggest available win". Removed.
+5. **Lighthouse recommendations listed metrics** (7 of 25 rows), labelled
+   CLS "Agentic", and showed raw backticks. Fixed.
+6. **`.well-known/api-catalog` returned 404** on GitHub Pages. The catalog is
+   now also at `api/catalog.json`, which the pages link to.
