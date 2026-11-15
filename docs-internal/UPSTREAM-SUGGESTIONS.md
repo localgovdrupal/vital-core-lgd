@@ -54,7 +54,7 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 30 | No way to take a site off the published report while it keeps being scanned | merged upstream [vital-core#356](https://github.com/mgifford/vital-core/pull/356); merged here 2026-11-14 in #27 (Walsall unlisted) |
 | 31 | `observations.json` is rewritten on every report run | merged upstream [vital-core#358](https://github.com/mgifford/vital-core/pull/358) 2026-11-15; merged here 2026-11-15 in #29 |
 | 32 | Evaluation report defaulted to US OpenACR for UK councils | merged upstream [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
-| 33 | Six report problems on the published site (ParaCharts, cross-technology, recurring patterns, Biggest lever, Lighthouse, API catalog) | PR open [vital-core#359](https://github.com/mgifford/vital-core/pull/359); merged here on branch `ccr-6931330a-wyg4jn`, not yet on main |
+| 33 | Six report problems on the published site (ParaCharts, cross-technology, recurring patterns, Biggest lever, Lighthouse, API catalog) | merged upstream [vital-core#359](https://github.com/mgifford/vital-core/pull/359) 2026-11-15; merged here 2026-11-15 in #30 |
 
 ## 1. Spell check is US English only
 
@@ -714,9 +714,9 @@ here.
 
 ## 33. Six report problems on the published site
 
-Recorded 2026-11-15. **Status: PR open,
-[vital-core#359](https://github.com/mgifford/vital-core/pull/359); merged
-here on branch `ccr-6931330a-wyg4jn`, not yet on main.** Found reviewing
+Recorded 2026-11-15. **Status: merged upstream in
+[vital-core#359](https://github.com/mgifford/vital-core/pull/359) 2026-11-15;
+merged here 2026-11-15 in #30.** Found reviewing
 https://mgifford.github.io/vital-core-lgd/ on 2026-11-14 and rechecked after
 the upstream sync (#27); all six were still there.
 
