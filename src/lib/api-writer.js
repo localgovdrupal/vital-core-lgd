@@ -12,7 +12,7 @@ export const SCHEMA_VERSION = '1';
 // Public JSON Schemas live under src/api/schema/ (checked in) and are copied
 // into docs/api/v1/schema/ at build time so consumers can validate responses.
 const SCHEMA_SRC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'api', 'schema');
-const SCHEMA_FILES = ['index.schema.json', 'snapshot.schema.json', 'findings.schema.json'];
+const SCHEMA_FILES = ['index.schema.json', 'snapshot.schema.json', 'findings.schema.json', 'performance-investigation.schema.json'];
 
 function severityCounts(bugs) {
   let critical_count = 0;
@@ -141,6 +141,11 @@ export function buildSnapshot(target, series, diffs, ledger, invSummary, latestB
     },
     reporting: buildFindingReporting(latestBugs, opts).summary,
     coverage: summarizeCoverage(latest, series[series.length - 2] ?? null, invSummary ?? null),
+    performance: (latest.performanceResources || latest.performanceInvestigations || latest.performanceCohort) ? deepRedactUrls({
+      cohort: latest.performanceCohort ?? null,
+      resources: latest.performanceResources ?? null,
+      investigations: latest.performanceInvestigations ?? null,
+    }, opts) : null,
     inventory: invSummary ?? null,
     findings: ledger.findings ?? {},
     tech_findings: latest.techFindings?.associations ?? null,

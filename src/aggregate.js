@@ -13,6 +13,7 @@ import { weekDeltas, severityBurndown, streaks, deltaSeries } from './lib/progre
 import { loadPdfLedger, pdfReportView } from './lib/pdf-audit.js';
 import { writeCsvs, writeBugsCsv, writeErrorsCsv, writeResourceCsv, writeLighthouseCsv, writeLighthouseJson, writeReadabilityCsv, writeSpellingCsv, writeAcronymsCsv, writeTechCsv, writeImagesCsv, writePdfsCsv, writeThirdPartyCsv, writePriorityPages, writeComponentClusterCsvs, writeTrendsCsv, writeRegionCsv } from './lib/csv.js';
 import { buildConsensus } from './lib/consensus.js';
+import { buildPerformanceInvestigations } from './lib/performance-investigations.js';
 import { loadInventory, saveInventory, updateInventory, inventorySummary } from './lib/inventory.js';
 import { resolvePageRecord } from './lib/page-records.js';
 import { scoreFor } from './lib/score.js';
@@ -114,7 +115,7 @@ for (const target of config.targets) {
   const series = [];
 
   for (const week of weeks) {
-    const summary = summarizeWeek(target, week);
+    const summary = summarizeWeek(target, week, series[series.length - 1] ?? null);
     if (summary) {
       summary.evidenceCoverage = summarizeEvidenceCoverage(summary);
       series.push(summary);
@@ -621,7 +622,7 @@ function currentSecurity(target, security) {
   return withCurrentGovernmentCheck(security, target.domain, target.governmentDomains);
 }
 
-function summarizeWeek(target, week) {
+function summarizeWeek(target, week, previousSummary = null) {
   const domainDir = path.join(DIRS.data, target.key);
   const pagesDir = path.join(domainDir, week, 'pages');
   const summaryPath = path.join(domainDir, week, 'summary.json');
@@ -648,6 +649,8 @@ function summarizeWeek(target, week) {
     summary.pagesSucceeded = tally.succeeded;
   }
   if (summary) summary.access = assessAccess({ records, runs: readRunLogs(runsDir) });
+  if (summary) summary.performanceCohort = summarizePerformanceCohort(readRunLogs(runsDir), summary.pagesScanned);
+  if (summary) summary.performanceInvestigations = buildPerformanceInvestigations(summary, { previous: previousSummary });
   return summary;
 }
 
@@ -707,6 +710,26 @@ function readTallyTotals(runsDirOrDirs, sinceMs = null) {
   return found ? { attempted, succeeded } : null;
 }
 
+/** Stable/rotating cohort counts from run logs; URLs are deduplicated across runs. */
+function summarizePerformanceCohort(runs, pagesScanned = 0) {
+  const stable = new Map();
+  for (const run of runs) {
+    for (const entry of run.performanceCohort?.stable ?? []) stable.set(entry.url, entry.reason ?? 'unknown');
+  }
+  if (stable.size === 0) return null;
+  return {
+    stable_pages: stable.size,
+    stable_urls: [...stable.keys()].slice(0, 50),
+    rotating_pages: Math.max(0, (pagesScanned ?? 0) - stable.size),
+    pages_scanned: pagesScanned ?? null,
+    reasons: [...stable.values()].reduce((out, reason) => {
+      out[reason] = (out[reason] ?? 0) + 1;
+      return out;
+    }, {}),
+    note: 'Stable pages are prioritised for matched-page trends; rotating pages are this week’s hash sample.',
+  };
+}
+
 /** Every run log in a runs directory, parsed; [] when there is none. */
 function readRunLogs(runsDir) {
   if (!fs.existsSync(runsDir)) return [];
@@ -746,6 +769,7 @@ function summarizeRecords(target, week, records, brokenLinks) {
   let alfaEvidence = null;
   const enginePageCounts = {}; // engine -> unique pages it ran on (coverage)
   const resourceMap = new Map(); // resource url -> { url, type, foundOn:Set }
+  const perfResourceMap = new Map(); // resource key -> bounded page-level evidence
   // Standards (per-page): checkId -> { label, pass, total } pass counts.
   const standardsChecks = {};
   let standardsPages = 0;
@@ -997,6 +1021,24 @@ function summarizeRecords(target, week, records, brokenLinks) {
         if (e.bytes == null && img.bytes != null) e.bytes = img.bytes;
       }
     }
+    // Do not let blocked/error/login-challenge responses contaminate shared
+    // resource rankings. Redirected requests are recorded under their landing
+    // URL, which is the URL this evidence actually describes.
+    if (rec.performanceResources && rec.status >= 200 && rec.status < 400 && !rec.blocked) {
+      for (const item of rec.performanceResources.resources ?? []) {
+        let entry = perfResourceMap.get(item.key);
+        if (!entry) {
+          entry = { key: item.key, type: item.type, third_party: item.third_party, origin: item.origin, pages: new Set(), examples: [], transfer_bytes: 0, decoded_body_bytes: 0, zero_transfer: 0, render_blocking_pages: new Set() };
+          perfResourceMap.set(item.key, entry);
+        }
+        entry.pages.add(rec.url);
+        if (entry.examples.length < 5) entry.examples.push(rec.url);
+        entry.transfer_bytes += item.transfer_bytes ?? 0;
+        entry.decoded_body_bytes += item.decoded_body_bytes ?? 0;
+        if (item.zero_transfer > 0) entry.zero_transfer++;
+        if (item.render_blocking) entry.render_blocking_pages.add(rec.url);
+      }
+    }
     if (rec.sustainability) {
       bytesList.push(rec.sustainability.bytes);
       requestsList.push(rec.sustainability.requests);
@@ -1048,7 +1090,7 @@ function summarizeRecords(target, week, records, brokenLinks) {
         const v = rec.lighthouse.metrics?.[k];
         if (typeof v === 'number') lhMetrics[k].push(v);
       }
-      lhPages.push({ url: rec.url, scores: rec.lighthouse.scores, metrics: rec.lighthouse.metrics ?? {} });
+      lhPages.push({ url: rec.url, scores: rec.lighthouse.scores, metrics: rec.lighthouse.metrics ?? {}, version: rec.lighthouse.version ?? null });
       // Roll up failing audits into recommendations (like axe rules): one
       // entry per audit id, counting pages affected and summing savings.
       for (const a of rec.lighthouse.audits ?? []) {
@@ -1096,6 +1138,22 @@ function summarizeRecords(target, week, records, brokenLinks) {
     // Per-engine coverage: unique pages each engine ran on, vs pages
     // scanned. Reflects the configured weekly sampling rates.
     coverage: enginePageCounts,
+    performanceResources: perfResourceMap.size ? {
+      schema_version: 'performance-resource-inventory/1',
+      pages_with_evidence: new Set([...perfResourceMap.values()].flatMap((entry) => [...entry.pages])).size,
+      total_resources: perfResourceMap.size,
+      third_party_resources: [...perfResourceMap.values()].filter((entry) => entry.third_party).length,
+      resources: [...perfResourceMap.values()]
+        .sort((a, b) => b.pages.size - a.pages.size || b.transfer_bytes - a.transfer_bytes)
+        .slice(0, 50)
+        .map((entry) => ({
+          key: entry.key, type: entry.type, third_party: entry.third_party, origin: entry.origin,
+          pages: entry.pages.size, examples: entry.examples, transfer_bytes: entry.transfer_bytes,
+          decoded_body_bytes: entry.decoded_body_bytes, zero_transfer_pages: entry.zero_transfer,
+          render_blocking_pages: entry.render_blocking_pages.size,
+        })),
+      note: 'Resource identity strips query strings; page counts are a denominator of pages with this Resource Timing evidence, not site-wide prevalence. Presence is not a defect or ownership claim.',
+    } : null,
     blocked,
     axe: {
       violationTotal: axeViolationTotal,
