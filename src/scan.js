@@ -9,11 +9,13 @@ import { loadState, saveState, addPage, pickBatch, weeklyCapFor, canonicalizeSta
 import { resolveCanonicalOrigin } from './lib/canonical.js';
 import { detectBlock } from './lib/access.js';
 import { cookieNames } from './lib/probe.js';
-import { isoWeek } from './lib/week.js';
+import { isoWeek, addWeeks } from './lib/week.js';
 import { fetchRobots } from './lib/robots.js';
 import { discoverFromSitemaps } from './lib/sitemap.js';
 import { checkLinks } from './lib/links.js';
 import { ratesFor, shouldRun, normalizeRate } from './lib/sampling.js';
+import { selectStablePerformanceCohort } from './lib/performance-cohort.js';
+import { shouldStopForBlocks, blockBackoffMs, BLOCK_COOLDOWN_WEEKS } from './lib/block-policy.js';
 import { loadPriorityUrls } from './lib/top-tasks.js';
 import { pageFingerprint } from './lib/page-records.js';
 import { syncObservationsFromState } from './lib/observations.js';
@@ -35,6 +37,7 @@ import { runTech } from './engines/tech.js';
 import { createLighthouseRunner } from './engines/lighthouse.js';
 import { createSustainabilityCollector } from './engines/sustainability.js';
 import { createThirdPartyCollector } from './engines/third-party.js';
+import { createPerformanceResourceCollector } from './engines/performance-resources.js';
 
 /**
  * One scan run for one domain. Designed to be boring:
@@ -95,6 +98,12 @@ const logMemory = (phase) => {
 logMemory('start');
 
 const state = loadState(target.key, target.domain);
+const blockedCooldown = state.blockedCooldown;
+if (blockedCooldown?.nextProbeWeek && week < blockedCooldown.nextProbeWeek) {
+  log(`blocked cooldown: next probe ${blockedCooldown.nextProbeWeek}; no requests this run`);
+  process.exit(0);
+}
+const probeOnly = Boolean(blockedCooldown?.nextProbeWeek && week >= blockedCooldown.nextProbeWeek);
 
 // --- Canonical origin -------------------------------------------------
 // The scheme and host the homepage redirects to. Every same-site URL is
@@ -136,6 +145,16 @@ if (priorityUrls.length) {
   saveState(target.key, state);
 }
 
+// --- Stable performance cohort ---------------------------------------
+// Mark a bounded, persistent set of pages before choosing this run's batch.
+// This does not add a visit or bypass the weekly cap; it makes the same
+// representative pages available for matched-page trends and Lighthouse.
+const performanceCohort = selectStablePerformanceCohort(state, target, siteOrigin);
+if (performanceCohort.stable.length) {
+  saveState(target.key, state);
+  log(`performance cohort: ${performanceCohort.stable.length} stable page(s), ${performanceCohort.familiesRepresented.length} family representative(s)`);
+}
+
 // --- URL filter -------------------------------------------------------
 // url_include / url_exclude patterns (inline arrays and/or *_file lists) from
 // targets.yml, matched as substrings or /regex/. Applied when adding URLs to
@@ -157,7 +176,12 @@ const delayMs = Math.max(
 
 // --- Batch ------------------------------------------------------------
 const weeklyCap = weeklyCapFor(target);
-const { batch, scannedThisWeek } = pickBatch(state, week, budget, weeklyCap);
+let { batch, scannedThisWeek } = pickBatch(state, week, budget, weeklyCap);
+if (probeOnly) {
+  const home = siteOrigin + '/';
+  batch = batch.filter((item) => item.url === home).slice(0, 1);
+  log(`blocked cooldown probe: ${batch.length ? home : 'homepage not in frontier'}`);
+}
 log(`${scannedThisWeek} scanned in ${week}; cap ${weeklyCap} (importance ${target.importance ?? 3}); batch of ${batch.length}`);
 if (batch.length === 0) {
   log('nothing to do');
@@ -183,6 +207,7 @@ context.setDefaultNavigationTimeout(target.nav_timeout_ms);
 const rates = ratesFor(config, target);
 const enginesRun = {}; // engine -> count of pages it ran on this run
 const tally = { ok: 0, blocked: 0, timeout: 0, robots_skipped: 0, url_filtered: 0, non_html: 0, redirect: 0, error: 0 };
+let consecutiveBlocks = 0;
 // Historical screenshots: opt-in, bounded per run, one per page with findings.
 const screenshotConfig = target.screenshots ?? { enabled: false };
 const screenshotsEnabled = screenshotConfig.enabled === true;
@@ -193,6 +218,10 @@ const runLog = { runId, week, domain: target.domain, canonical, robots: { rootAl
 // Opt-in: dismiss a configured consent dialog once per run so it is audited once, not on every page.
 let consentDone = false;
 if (target.consentHandling) runLog.consent = { choice: target.consentHandling.choice, attempts: 0, clicked_on: null };
+runLog.performanceCohort = {
+  stable: batch.filter((item) => item.stableCohort).map((item) => ({ url: item.url, reason: item.stableCohort.reason })),
+  selected_in_batch: batch.filter((item) => item.stableCohort).length,
+};
 
 // Link checking: collect links seen on pages that are in link-check's
 // sample, then probe them once after the scan. Rate > 0 enables it.
@@ -303,6 +332,7 @@ for (const item of batch) {
   // response (like sustainability). Keyed on the page's canonical URL so
   // same-site subdomains are classified first-party.
   const thirdParty = runs('third-party') ? createThirdPartyCollector(page, item.url) : null;
+  const perfResources = runs('performance-resources') ? createPerformanceResourceCollector(page, item.url) : null;
 
   try {
     const response = await page.goto(fetchUrl, { waitUntil: 'load' });
@@ -357,9 +387,24 @@ for (const item of batch) {
       runLog.scanned.push(recId);
       Object.assign(state.pages[recId], { lastScannedWeek: week, lastScannedAt: scannedAt, lastStatus: status, failCount: 0 });
       tally.blocked++;
+      consecutiveBlocks++;
       log(`blocked ${status} ${new URL(recUrl).pathname}: firewall ${block.kind}${block.by.length ? ` (${block.by.join(', ')})` : ''}`);
       if (++sincePersist >= STATE_SAVE_EVERY) { saveState(target.key, state); sincePersist = 0; }
-      await new Promise((r) => setTimeout(r, delayMs));
+      const forceStop = probeOnly;
+      const decision = shouldStopForBlocks({ attempted: processedPages, blocked: tally.blocked, consecutive: consecutiveBlocks });
+      if (forceStop || decision.stop) {
+        const nextProbeWeek = addWeeks(week, BLOCK_COOLDOWN_WEEKS);
+        state.blockedCooldown = { sinceWeek: state.blockedCooldown?.sinceWeek ?? week, lastBlockedWeek: week, nextProbeWeek };
+        decision.stop = true;
+        decision.reason = forceStop ? 'blocked during cooldown probe' : decision.reason;
+        runLog.stoppedReason = 'blocked';
+        runLog.blockedStop = { reason: decision.reason, attempted: processedPages, blocked: tally.blocked, consecutive: consecutiveBlocks, nextProbeWeek, at: new Date().toISOString() };
+        log(`stopping run: ${decision.reason}`);
+        saveState(target.key, state);
+        break;
+      }
+      const backoff = blockBackoffMs({ status, retryAfter: (response?.headers() ?? {})['retry-after'], consecutive: consecutiveBlocks });
+      await new Promise((r) => setTimeout(r, Math.max(delayMs, backoff)));
       continue;
     }
     // Let late async rendering settle before auditing. Government sites
@@ -394,7 +439,10 @@ for (const item of batch) {
     // any lazy content they trigger) generate their own network traffic;
     // collecting after them would conflate audit activity with the real
     // page weight and couple the number to which engines happened to run.
-    if (sustain) { record.sustainability = sustain.collect(); mark('sustainability'); }
+    if (sustain) { record.sustainability = await sustain.collect(); mark('sustainability'); }
+    // Same loaded page: no second navigation. Collect before audits so audit
+    // traffic cannot inflate the Resource Timing inventory.
+    if (perfResources) { record.performanceResources = await perfResources.collect(); mark('performance-resources'); }
 
     if (status >= 200 && status < 400 && (response?.headers()['content-type'] ?? '').includes('html')) {
       // Best-effort and read-only: taken before the audits so it describes the page as loaded.
@@ -477,7 +525,7 @@ for (const item of batch) {
       // Lighthouse: only when this page is in lighthouse's sample AND its
       // own Chrome launched. The sample rate keeps the (slow) audit count
       // proportional to the week's pages.
-      if (lighthouse?.available && runs('lighthouse')) {
+      if (lighthouse?.available && (item.stableCohort || runs('lighthouse'))) {
         const lh = await lighthouse.audit(recUrl);
         if (lh) {
           record.lighthouse = lh;
@@ -572,7 +620,11 @@ for (const item of batch) {
     state.pages[recId].lastStatus = status;
     state.pages[recId].failCount = 0;
     if (status >= 400) tally.blocked++;
-    else tally.ok++;
+    else {
+      tally.ok++;
+      consecutiveBlocks = 0;
+      if (probeOnly) { delete state.blockedCooldown; saveState(target.key, state); }
+    }
     log(`${status} ${urlPath} ${record.axe ? `axe:${record.axe.violationCount}` : ''} ${record.alfa ? `alfa:${record.alfa.failedCount}` : ''}`);
   } catch (err) {
     const msg = String(err);

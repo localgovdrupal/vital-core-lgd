@@ -4480,6 +4480,37 @@ ${moreGroups}`;
   });
 }
 
+function transferLabel(item) {
+  if (!item || !Number.isFinite(item.transfer_bytes)) return t('n/a');
+  if (item.pages && item.zero_transfer_pages != null && item.zero_transfer_pages >= item.pages) return t('N/A (reported 0)');
+  return kb(item.transfer_bytes);
+}
+
+function performanceInvestigationsSection(summary) {
+  const queue = summary.performanceInvestigations;
+  if (!queue?.candidates?.length) return '';
+  const rows = queue.candidates.slice(0, 15).map((candidate) => {
+    const label = candidate.resource?.key ?? candidate.recommendation?.title ?? candidate.page?.url ?? candidate.id;
+    const kind = candidate.resource?.type ?? candidate.category;
+    const pages = candidate.resource?.pages ?? candidate.recommendation?.pages ?? 1;
+    const transfer = candidate.resource ? transferLabel(candidate.resource) : t('n/a');
+    return `<tr><th scope="row">${esc(label)}</th><td>${esc(kind)}</td><td class="num">${pages}</td><td class="num">${transfer}</td><td>${esc(candidate.status)}</td><td>${esc((candidate.priority_reasons ?? []).slice(0, 2).join('; '))}</td></tr>`;
+  }).join('');
+  return `<details class="coverage"><summary>${t('Performance investigation candidates (@n)', { '@n': queue.candidates.length })}</summary>
+<p class="meta">${t('Candidates are ranked observations from stored evidence, not confirmed defects or component ownership. The table gives the evidence denominator; the list gives the hypothesis, competing explanations and proposed test.')}</p>
+<table><caption>${t('Shared resources worth investigating. Page counts use sampled pages with evidence, not the whole site.')}</caption><thead><tr><th scope="col">${t('Resource')}</th><th scope="col">${t('Type')}</th><th scope="col" class="num">${t('Pages')}</th><th scope="col" class="num">${t('Network transfer (sum)')}</th><th scope="col">${t('Status')}</th><th scope="col">${t('Priority reason')}</th></tr></thead><tbody>${rows}</tbody></table>
+<ul>${queue.candidates.slice(0, 5).map((candidate) => `<li><strong>${esc(candidate.hypothesis)}</strong> ${t('Alternatives:')} ${esc((candidate.alternatives ?? []).join(' ') || t('none recorded'))} <span class="bug-meta">${t('Proposed test:')} ${esc(candidate.proposed_test)}</span> <span class="bug-meta">${esc((candidate.priority_reasons ?? []).join(' · '))}</span></li>`).join('')}</ul></details>`;
+}
+
+function performanceResourcesSection(summary) {
+  const r = summary.performanceResources;
+  if (!r?.resources?.length) return '';
+  const rows = r.resources.slice(0, 15).map((item) => `<tr><th scope="row">${esc(item.key)}</th><td>${esc(item.type)}</td><td class="num" data-sort="${item.pages}">${item.pages}</td><td class="num" data-sort="${item.transfer_bytes}">${transferLabel(item)}</td><td>${item.third_party ? t('Third party') : t('First party')}</td></tr>`).join('');
+  return `<details class="coverage"><summary>${t('Shared performance resources (@n observed)', { '@n': r.total_resources })}</summary>
+<p class="meta">${t('Resource Timing identity strips query strings. Page counts use the pages with this evidence, not the whole site. Presence is not a defect or a component-ownership claim.')}</p>
+<table><caption>${t('Resources observed across the most sampled pages. Transfer is summed across those pages; zero can mean cache or a cross-origin measurement that the browser did not expose.')}</caption><thead><tr><th scope="col">${t('Resource')}</th><th scope="col">${t('Type')}</th><th scope="col" class="num">${t('Pages')}</th><th scope="col" class="num">${t('Network transfer (sum)')}</th><th scope="col">${t('Party')}</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+}
+
 function coverageSummarySection(summary, prev, invSummary) {
   const coverage = summarizeCoverage(summary, prev, invSummary);
   if (!coverage) return '';
@@ -4496,6 +4527,7 @@ ${heading('h-coverage-summary', t('How much was tested'), 2)}
 ${coverage.pages_attempted != null ? ` ${t('@n attempted; @s succeeded.', { '@n': nf(coverage.pages_attempted), '@s': nf(coverage.pages_succeeded ?? 0) })}` : ''}
 ${coverage.pages_blocked ? ` ${t('@n blocked.', { '@n': nf(coverage.pages_blocked) })}` : ''}</p>
 <ul class="coverage-engines">${engines}</ul>
+${coverage.stable_performance_pages != null ? `<p class="meta">${t('Performance cohort: @stable stable monitoring page(s); @rotating rotating sample page(s). Stable pages are reused for matched-page trends, not extra scans.', { '@stable': nf(coverage.stable_performance_pages), '@rotating': nf(coverage.rotating_performance_pages ?? 0) })}</p>` : ''}
 ${known}
 ${coverage.notes.length ? `<ul class="coverage-notes">${coverage.notes.map((note) => `<li>${esc(note)}</li>`).join('')}</ul>` : ''}
 <p class="meta">${t('Coverage is not the same as conformance. A clean automated result does not prove that untested pages are accessible, and a drop in findings may reflect lower coverage.')}</p>
@@ -4540,7 +4572,7 @@ export function renderDomainReport(target, summary, prev, diff, series, bugs = [
   <div><dt>${t('Broken links')}</dt><dd>${summary.linkCheck.brokenCount}${summary.linkCheck.brokenCount > 0 ? ` <a href="errors.html" class="csv-link">${t('details')}</a>` : ''}</dd></div>` : ''}
   ${summary.sustainability ? `
   <div><dt>${t('Median page weight')}</dt><dd>${kb(summary.sustainability.medianBytes)}
-    ${diff?.sustainability ? delta(Math.round(diff.sustainability.medianBytesDelta / 1024), { unit: ' KB' }) : ''}</dd></div>
+    ${diff?.sustainability ? delta(Math.round(diff.sustainability.medianBytesDelta / 1024), { unit: ' KB' }) : ''}<span class="bug-meta"> ${t('Legacy mixed byte basis (Content-Length or decoded body), not network transfer. CO₂/Wh are modelled estimates.')}</span></dd></div>
   <div><dt>${t('Median requests per page')}</dt><dd>${summary.sustainability.medianRequests}</dd></div>
   <div><dt>${sustainabilityHeadline(summary.sustainability).label}</dt><dd>${sustainabilityHeadline(summary.sustainability).value}</dd></div>` : ''}
 </dl>
@@ -4578,6 +4610,8 @@ ${score && scoreFormat !== 'none' ? `<aside class="scorecard" aria-label="Automa
 <p class="note score-scope-note" id="score-scope-note" hidden>${t('You have URL exclusions active. They filter the findings on the Accessibility page; this whole-site score still reflects every scanned page.')}</p>` : ''}
 
 ${coverageSummarySection(summary, prev, invSummary)}
+${performanceResourcesSection(summary)}
+${performanceInvestigationsSection(summary)}
 
 <p class="meta">${t('Primary standards queue: @n required finding type(s) (handling: report). Verification queue: @r required finding type(s) (handling: review). Aspirational queue: @asp finding type(s). Advisory queue: @a finding type(s). Unmapped review queue: @u finding type(s).', {
   '@n': lanes.requiredReport,
@@ -4960,6 +4994,10 @@ export function accessReasons(access, userAgent = 'vital-scans') {
     labels.push(t('unreachable'));
     items.push(`<strong>${t('Unreachable')}</strong>: ${t('no page loaded in @runs run(s)', { '@runs': access.connection.runs })}${access.connection.error ? ` (${esc(access.connection.error.replace(/\.$/, ''))})` : ''}.`);
     actions.push(t('Run Actions → diagnose for this domain to see what the scanner’s network gets. A network block has to be lifted by the site’s team.'));
+  }
+  if (access?.cooldown?.next_probe_week) {
+    labels.push(t('in cooldown'));
+    items.push(`<strong>${t('Scanning is paused')}</strong>: ${t('the scanner stopped after repeated blocking. Next probe week: @week; routine scans will not request this site before then.', { '@week': access.cooldown.next_probe_week })}`);
   }
   if (access?.level === 'blocked' && Object.keys(access.errorStatuses ?? {}).length) {
     items.push(t('Other pages answered with an error: @statuses.', { '@statuses': esc(statusList(access.errorStatuses)) }));

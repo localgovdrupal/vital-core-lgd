@@ -30,7 +30,7 @@ JSON Schemas for each resource are published under
 | Path | Description |
 |---|---|
 | `/api/v1/index.json` | All published domains — latest week, severity counts, links |
-| `/api/v1/<domain-key>/snapshot.json` | Full domain history — summary, findings ledger, weekly series, tech associations |
+| `/api/v1/<domain-key>/snapshot.json` | Full domain history — summary, findings ledger, weekly series, tech associations, performance evidence |
 | `/api/v1/<domain-key>/<week>/findings.json` | Per-week normalized accessibility findings with trend status |
 | `/api/v1/schema/*.schema.json` | JSON Schemas for the resources above |
 
@@ -324,6 +324,15 @@ substituted.
 `savingsBytesP75`, `savingsMsMedian`, `savingsMsP75`. The totals are sums across
 sampled pages, not a single visitor's experience; time savings are per page.
 
+### Performance evidence (additive v1 fields)
+
+`snapshot.json` includes a `performance` object when available: the stable/
+rotating cohort counts, bounded shared-resource inventory, and
+`performance-investigation/1` candidates. Resource keys are query-string-free;
+page counts use sampled pages with evidence, not whole-site prevalence. These
+are observations and hypotheses, not causal findings, component ownership or
+measured energy.
+
 ### Evidence coverage (additive v1 fields)
 
 `evidence_coverage` is finding-level, not an occurrence count:
@@ -348,6 +357,13 @@ image evidence:
 
 - `findings[].screenshot` — `{ available, file, file_name, width, height,
   full_page, captured_at, format, bytes }` or `{ available: false, reason }`.
+
+Sustainability records retain the historical `bytes`, `co2g`, `energyWh` and
+`model` fields. New records add `measurement` (`sustainability-measurement/1`)
+with the byte basis, Resource Timing values, CO₂ model/version, grid-intensity
+source, boundary and limitations. Treat CO₂/Wh as modelled estimates; they are
+not observed energy.
+
   Dimensions are CSS pixels; `file` is a path relative to the week report
   (e.g. `screenshots/<page-id>.jpg`). `captured_at` describes the scan, not the
   current site.
