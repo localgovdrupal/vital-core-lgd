@@ -53,6 +53,21 @@ every commit.
 - A red `scan` job is not automatically lost data: read the failed step and
   the data repo log before rescanning.
 
+## Instance repository links
+
+- After the transfer, `llms.txt`, the API catalog, the HTML `rel="help"`
+  links and the ACR still pointed at `mgifford/vital-core` (the template).
+  They now derive from `GITHUB_REPOSITORY` with a local fallback to
+  upstream (`src/lib/repo-links.js`); fixed upstream in
+  [vital-core#384](https://github.com/mgifford/vital-core/pull/384) and
+  merged here.
+- The links are generated with the report: a rebuild is required after
+  changing them. The 2026-11-19 report run cleared the last `mgifford`
+  reference from `llms.txt`.
+- The Jira export's translated string keeps its upstream URL so the existing
+  fr/ja/nl catalog translations stay valid; it is an exported template, not a
+  page link.
+
 ## Data repo
 
 - No migration, backfill, new file or `.gitignore` change was needed. New
