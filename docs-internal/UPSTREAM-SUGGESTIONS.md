@@ -97,7 +97,7 @@ Recorded 2026-10-27. **Status: open**, same as vital-core-nsf §8.
 
 The only way to apply `config/profiles/lgd.yml` is to set `VITAL_PROFILE: lgd`
 on the Aggregate step of `.github/workflows/report.yml`
-([vital-core-lgd#2](https://github.com/mgifford/vital-core-lgd/pull/2)).
+([vital-core-lgd#2](https://github.com/localgovdrupal/vital-core-lgd/pull/2)).
 That edit can conflict when upstream changes the same lines, and it goes
 against the profile README's rule that profiles shouldn't need workflow
 edits.
@@ -116,7 +116,7 @@ template". But the README told people not to use it, without saying how to
 join the history afterwards. #279 makes the template the documented path,
 adds the one-time join, and sets up this file's convention for every fleet.
 This repo's join is in
-[vital-core-lgd#2](https://github.com/mgifford/vital-core-lgd/pull/2).
+[vital-core-lgd#2](https://github.com/localgovdrupal/vital-core-lgd/pull/2).
 
 ## 5. Shipped defaults assume a US federal fleet
 
@@ -152,7 +152,7 @@ Recorded 2026-10-27. **Status: merged upstream in
 here 2026-10-27.**
 
 This repo's first Dependabot security run
-([40595139585](https://github.com/mgifford/vital-core-lgd/actions/runs/40595139585))
+([40595139585](https://github.com/localgovdrupal/vital-core-lgd/actions/runs/40595139585))
 failed with "security update not possible" for `@vitest/mocker` 4.1.11
 (fixed in 4.1.12). `vitest` pins `@vitest/mocker` exactly, and `vitest` is a
 production dependency through `@siteimprove/alfa-test-utils` →
@@ -179,7 +179,7 @@ Recorded 2026-10-27. **Status: merged upstream in
 here 2026-10-27.**
 
 The first `go.walsall.gov.uk` scan
-([job](https://github.com/mgifford/vital-core-lgd/actions/runs/40596432079/job/122513577156))
+([job](https://github.com/localgovdrupal/vital-core-lgd/actions/runs/40596432079/job/122513577156))
 exited with "Protocol error (Target.getTargetInfo): Session with given id not
 found" from Lighthouse's `target-manager.js`. Lighthouse ignores "Target
 closed" when a page removes an iframe or worker before it finishes attaching,
@@ -329,7 +329,7 @@ Recorded 2026-10-30. **Status: merged upstream in
 [vital-core#286](https://github.com/mgifford/vital-core/pull/286); merged here
 2026-10-30.**
 
-[Walsall's security page](https://mgifford.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W44/security.html)
+[Walsall's security page](https://localgovdrupal.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W44/security.html)
 showed "✗ Sponsored government TLD (.gov/.mil/.edu) uk". `.gov.uk` has
 counted since vital-core#281, but each security check is stored with the
 scan that ran it, so a result from before then kept the old label and the
@@ -356,7 +356,7 @@ Recorded 2026-10-30. **Status: merged upstream in
 [vital-core#286](https://github.com/mgifford/vital-core/pull/286); merged here
 2026-10-30.**
 
-[Walsall's tech ↔ issues page](https://mgifford.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W44/tech-findings.html)
+[Walsall's tech ↔ issues page](https://localgovdrupal.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W44/tech-findings.html)
 listed "aria-prohibited-attr (axe) 1.02×" for Google Ads, which runs on 59
 of 60 pages: lift against all pages is about 1 for any finding there. Eleven
 Alfa rules showed the same "26 / 47": Alfa runs on half of this fleet's
@@ -375,7 +375,7 @@ Recorded 2026-10-30. **Status: merged upstream in
 [vital-core#287](https://github.com/mgifford/vital-core/pull/287); merged here
 2026-10-30.**
 
-[Dependabot alert 7](https://github.com/mgifford/vital-core-lgd/security/dependabot/7)
+[Dependabot alert 7](https://github.com/localgovdrupal/vital-core-lgd/security/dependabot/7)
 flagged `@hono/node-server` 2.0.11 (patched in 2.1.3), which arrives through
 `@modelcontextprotocol/sdk`; Dependabot timed out creating the update. The
 lockfile is shared by every fleet, so the bump went upstream. The MCP server
@@ -402,7 +402,7 @@ Recorded 2026-10-30. **Status: merged upstream in
 here 2026-10-30.**
 
 This fleet's first `pdf-audit` run
-([41038668893](https://github.com/mgifford/vital-core-lgd/actions/runs/41038668893))
+([41038668893](https://github.com/localgovdrupal/vital-core-lgd/actions/runs/41038668893))
 worked but warned that `astral-sh/setup-uv@v6` targets Node 20, which
 GitHub now forces onto Node 24. The workflow is shared, so the fix went
 upstream: setup-uv v10.3.3 (Node 24), pinned by SHA because its floating
@@ -718,7 +718,7 @@ here.
 Recorded 2026-11-15. **Status: merged upstream in
 [vital-core#359](https://github.com/mgifford/vital-core/pull/359) 2026-11-15;
 merged here 2026-11-15 in #30.** Found reviewing
-https://mgifford.github.io/vital-core-lgd/ on 2026-11-14 and rechecked after
+https://localgovdrupal.github.io/vital-core-lgd/ on 2026-11-14 and rechecked after
 the upstream sync (#27); all six were still there.
 
 1. **ParaCharts never rendered.** Every chart page loaded the 2.8 MB vendored

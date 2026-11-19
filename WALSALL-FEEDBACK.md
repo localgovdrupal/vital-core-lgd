@@ -8,7 +8,7 @@ Figures come from the report published on 4 November 2026 (week 2026-W45).
 Scans were still running that week, so numbers will keep moving. See
 [What will take time](#what-will-take-time).
 
-Live report: <https://mgifford.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W45/accessible.html>
+Live report: <https://localgovdrupal.github.io/vital-core-lgd/reports/go.walsall.gov.uk/2026-W45/accessible.html>
 (the new "Scope of analysis" section is part of that page).
 
 ## What we heard
@@ -131,6 +131,6 @@ For your developers. Shared code changes in
 (cross-engine correlations and reporting), #293 (shared components and page
 families), #294 (component observation) and #295 (component-aware action queue
 and text fix). Walsall settings and the written record are in
-[vital-core-lgd](https://github.com/mgifford/vital-core-lgd): pull requests #16
+[vital-core-lgd](https://github.com/localgovdrupal/vital-core-lgd): pull requests #16
 to #20 and `docs-internal/UPSTREAM-SUGGESTIONS.md` (items 24 to 27). Walsall's
 shared-component settings are in `config/targets.yml` under `go.walsall.gov.uk`.
