@@ -55,6 +55,7 @@ and vital-core's open issues and PRs, and link instead of repeating.
 | 31 | `observations.json` is rewritten on every report run | merged upstream [vital-core#358](https://github.com/mgifford/vital-core/pull/358) 2026-11-15; merged here 2026-11-15 in #29 |
 | 32 | Evaluation report defaulted to US OpenACR for UK councils | merged upstream [vital-core#357](https://github.com/mgifford/vital-core/pull/357); merged here 2026-11-14 in #27 |
 | 33 | Six report problems on the published site (ParaCharts, cross-technology, recurring patterns, Biggest lever, Lighthouse, API catalog) | merged upstream [vital-core#359](https://github.com/mgifford/vital-core/pull/359) 2026-11-15; merged here 2026-11-15 in #30 |
+| 34 | The `performance-resources: 100` default has no stated storage budget | open; this fleet runs it at 25 (see §34) |
 
 ## 1. Spell check is US English only
 
@@ -736,3 +737,25 @@ the upstream sync (#27); all six were still there.
    CLS "Agentic", and showed raw backticks. Fixed.
 6. **`.well-known/api-catalog` returned 404** on GitHub Pages. The catalog is
    now also at `api/catalog.json`, which the pages link to.
+
+## 34. `performance-resources: 100` has no stated storage budget
+
+Recorded 2026-11-19. **Status: open.** This fleet sets
+`sampling.performance-resources: 25` in `config/targets.yml`.
+
+`src/engines/performance-resources.js` stores up to 200 Resource Timing
+entries on **every** page record. Measured on `mgifford/vital-core-data` at
+2026-W47: 44–51 resources per page produced 14–17 KB of JSON, 60–78% of the
+page record (~4 KB gzipped). At this fleet's ~2,600 pages/week that is roughly
+25–35 MB of extra page detail per week, on top of the ~60 MB/week already
+written (W44–W46).
+
+The shipped `100` rate is reasonable when a target's records are small, but
+neither `AGENTS.md` nor `ARCHITECTURE.md` gives a per-page figure, so a fleet
+cannot budget before enabling it. The sampling table in `AGENTS.md` also does
+not list `performance-resources` as an engine row, and the engine is absent
+from the inventory table entirely.
+
+Suggested fix: state the measured per-page cost (and the 200-entry cap) in the
+engine table, add the engine row, and suggest a sampled rate such as 25 (the
+`third-party` rate) with 100 as an opt-in.
