@@ -39,6 +39,20 @@ every commit.
   candidates. Filed upstream as suggestion #34 because the per-page storage
   cost is undocumented.
 
+## Lighthouse crash exposed by the cohort
+
+- Stable-cohort pages now always run Lighthouse, so iframe-heavy pages are
+  audited more often. On 2026-11-19 `go.walsall.gov.uk` crashed two
+  consecutive scan runs with an uncaught `PROTOCOL_TIMEOUT`
+  (`Network.enable`) from Lighthouse's target listener. The data still
+  committed (the commit and state steps run with `if: always()`), but the
+  job exited 1 and the run went red.
+- Fixed upstream in [vital-core#383](https://github.com/mgifford/vital-core/pull/383)
+  and merged here from the same branch. The next Walsall scan is the live
+  check.
+- A red `scan` job is not automatically lost data: read the failed step and
+  the data repo log before rescanning.
+
 ## Data repo
 
 - No migration, backfill, new file or `.gitignore` change was needed. New
@@ -89,8 +103,9 @@ Checklist:
    to GitHub Actions, `VITAL_DATA_DEPLOY_KEY` present, the write deploy key on
    the data repo, branch protection/rulesets, and the AccessLint app installed
    on the org (otherwise that PR check disappears).
-6. Run Actions → report (`workflow_dispatch`) and check the data push, the new
-   Pages URL, the issue comment, and one CSV/`llms.txt` link. The issue
+6. Run Actions → scan and report (`workflow_dispatch`) and check the data push,
+   the new Pages URL, the issue comment, and one CSV/`llms.txt` link. Watch the
+   Walsall job: it is the known-flaky Lighthouse path until #383 is upstream. The issue
    comment derives its base URL from the repo owner and name, so it follows
    automatically; CSV, `llms.txt` and the API catalog use `report_base_url`
    and do not.
