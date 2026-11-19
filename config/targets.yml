@@ -46,7 +46,7 @@ defaults:
   # only for values that do not change the content, e.g. [page] for a paginated
   # index. Query variants remain distinct pages by default.
   url_ignore_params: []
-  user_agent: "vital-scans/0.1 (+https://github.com/mgifford/vital-core-lgd; accessibility and sustainability monitoring)"
+  user_agent: "vital-scans/0.1 (+https://github.com/localgovdrupal/vital-core-lgd; accessibility and sustainability monitoring)"
   spelling_locale: en-GB     # UK councils: British "-ise" spellings (en-US, en-GB, en-CA or en-AU; per-target override below)
   screenshots:                # historical, bounded evidence; opt-in (privacy)
     enabled: false            # no screenshot is captured unless a target enables it
@@ -125,13 +125,13 @@ interactive_charts: false
 # Base URL for published reports (used to generate absolute links in CSV exports
 # so that affected_pages_csv cells are clickable in Google Sheets / Excel).
 # Trailing slash is optional. Leave empty to keep CSV links relative.
-report_base_url: "https://mgifford.github.io/vital-core-lgd"
+report_base_url: "https://localgovdrupal.github.io/vital-core-lgd"
 
 # Scan data (data/) lives in its own repository, checked out into data/ by
 # scan.yml and report.yml, so cloning this repo gets code only. A target may
 # override it, but CI currently needs every non-hf_only target on one repo.
 # hf_only (VA) targets may not set it: their data never goes to git.
-data_repo: mgifford/vital-core-lgd-data
+data_repo: localgovdrupal/vital-core-lgd-data
 
 # Report languages. Each report is rendered once per listed language; the
 # `default_language` keeps the canonical (unsuffixed) file paths — e.g.
