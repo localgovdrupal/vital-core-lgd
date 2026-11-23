@@ -392,3 +392,4 @@ targets:
     nav_timeout_ms: 60000          # its homepage timed out at 30 s on every first-week run
   - domain: www.hackney.gov.uk     # Hackney Council
   - domain: www.luton.gov.uk       # Luton Borough Council
+  - domain: demo.localgovdrupal.org  
