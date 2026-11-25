@@ -17,6 +17,7 @@ targets:
   - blackburn.gov.uk
   - www.hackney.gov.uk
   - www.luton.gov.uk
+  - demo.localgovdrupal.org
 
 branding:
   title: "LocalGov Drupal Accessibility & Sustainability"
